@@ -53,7 +53,7 @@ flowchart LR
 ### Install
 
 ```bash
-git clone https://github.com/stelian-matei/cursor-insights.git
+git clone https://github.com/mazzucci/cursor-insights.git
 cd cursor-insights
 bash install.sh
 ```

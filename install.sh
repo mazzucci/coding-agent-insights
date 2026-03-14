@@ -91,7 +91,7 @@ for event, commands in template.get('hooks', {}).items():
 with open(target_path, 'w') as f:
     json.dump(target, f, indent=2)
     f.write('\n')
-" "$SCRIPT_DIR/hooks.json" "$HOOKS_JSON"
+" "$SCRIPT_DIR/hooks/hooks.json" "$HOOKS_JSON"
 
 info "Merged hook entries into $HOOKS_JSON"
 
