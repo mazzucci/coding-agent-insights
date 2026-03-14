@@ -1,5 +1,5 @@
 {
-  "name": "cursor-insights",
+  "name": "coding-agent-insights",
   "version": "0.1.0",
   "description": "Session tracing, search, and observability for Cursor agents via Phoenix",
   "author": "stelian.matei",

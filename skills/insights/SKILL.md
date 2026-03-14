@@ -1,9 +1,9 @@
 ---
-name: cursor-insights
+name: coding-agent-insights
 description: Flush pending traces, check status, search past sessions, and manage golden datasets in Phoenix.
 ---
 
-# cursor-insights
+# coding-agent-insights
 
 ## Trigger
 
@@ -16,7 +16,7 @@ Use this skill when the user asks to:
 ## Prerequisites
 
 - `uv` must be installed (the flush script runs via `uv run`)
-- Phoenix must be reachable (check the URL in `~/.cursor/hooks/.cursor-insights.env`)
+- Phoenix must be reachable (check the URL in `~/.cursor/hooks/.coding-agent-insights.env`)
 
 ## Flush pending traces
 
@@ -45,12 +45,12 @@ wc -l /tmp/cursor-traces.jsonl 2>/dev/null || echo "Buffer is empty"
 Phoenix health:
 
 ```bash
-curl -sf "$(grep PHOENIX_HOST ~/.cursor/hooks/.cursor-insights.env | cut -d'"' -f2)" && echo "OK" || echo "Unreachable"
+curl -sf "$(grep PHOENIX_HOST ~/.cursor/hooks/.coding-agent-insights.env | cut -d'"' -f2)" && echo "OK" || echo "Unreachable"
 ```
 
 ## Search past traces
 
-Use a Python script with `arize-phoenix-client` to query Phoenix. The Phoenix host and project are stored in `~/.cursor/hooks/.cursor-insights.env`.
+Use a Python script with `arize-phoenix-client` to query Phoenix. The Phoenix host and project are stored in `~/.cursor/hooks/.coding-agent-insights.env`.
 
 ### List recent sessions
 
@@ -61,7 +61,7 @@ Use a Python script with `arize-phoenix-client` to query Phoenix. The Phoenix ho
 # ///
 from phoenix.client import Client
 
-client = Client(base_url="http://localhost:6006")  # or read from .cursor-insights.env
+client = Client(base_url="http://localhost:6006")  # or read from .coding-agent-insights.env
 
 spans_df = client.spans.get_spans(project_identifier="cursor")
 sessions = spans_df[spans_df["attributes"].apply(
@@ -127,7 +127,7 @@ for ds in datasets:
 
 ## Configuration
 
-All settings live in `~/.cursor/hooks/.cursor-insights.env`:
+All settings live in `~/.cursor/hooks/.coding-agent-insights.env`:
 
 | Variable | Default | Purpose |
 |---|---|---|

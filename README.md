@@ -1,8 +1,8 @@
-# cursor-insights
+# coding-agent-insights
 
-Session tracing and observability for Cursor AI agents, powered by [Phoenix](https://github.com/Arize-ai/phoenix).
+Session tracing and observability for AI coding agents, powered by [Phoenix](https://github.com/Arize-ai/phoenix).
 
-Every agent interaction — prompts, tool calls, file edits, shell commands, thinking steps — is captured automatically and sent to Phoenix for search, replay, and analysis.
+Every agent interaction — prompts, tool calls, file edits, shell commands, thinking steps — is captured automatically and sent to Phoenix for search, replay, and analysis. Currently supports Cursor IDE, with plans to expand to other coding agents.
 
 ## How it works
 
@@ -53,8 +53,8 @@ flowchart LR
 ### Install
 
 ```bash
-git clone https://github.com/mazzucci/cursor-insights.git
-cd cursor-insights
+git clone https://github.com/mazzucci/coding-agent-insights.git
+cd coding-agent-insights
 bash install.sh
 ```
 
@@ -77,7 +77,7 @@ Open Phoenix at [http://localhost:6006](http://localhost:6006) (or your custom U
 
 ## Configuration
 
-All settings are in `~/.cursor/hooks/.cursor-insights.env`:
+All settings are in `~/.cursor/hooks/.coding-agent-insights.env`:
 
 ```bash
 PHOENIX_HOST="http://localhost:6006"
@@ -127,7 +127,7 @@ All turns from the same Cursor conversation are grouped into a Phoenix session. 
 
 ### Golden datasets
 
-Save exemplary traces to Phoenix datasets for future reference — proven prompt patterns, successful tool chains, or reference workflows. See the [cursor-insights skill](skills/insights/SKILL.md) for programmatic examples.
+Save exemplary traces to Phoenix datasets for future reference — proven prompt patterns, successful tool chains, or reference workflows. See the [coding-agent-insights skill](skills/insights/SKILL.md) for programmatic examples.
 
 ## Uninstall
 
@@ -145,10 +145,10 @@ This removes hook scripts and config entries. Optionally stops the Phoenix conta
 └── hooks/
     ├── trace-hook.sh             # Bash hot-path: buffers events (~5ms)
     ├── flush.py                  # Python: transforms & sends to Phoenix
-    └── .cursor-insights.env      # User settings (Phoenix URL, project, etc.)
+    └── .coding-agent-insights.env      # User settings (Phoenix URL, project, etc.)
 ```
 
-- **trace-hook.sh** runs for every hook event. It sources `.cursor-insights.env`, appends the JSON payload to the buffer, and triggers `flush.py` on `stop`/`sessionEnd`.
+- **trace-hook.sh** runs for every hook event. It sources `.coding-agent-insights.env`, appends the JSON payload to the buffer, and triggers `flush.py` on `stop`/`sessionEnd`.
 - **flush.py** runs via `uv run` (isolated Python with `arize-phoenix-client`). It reads the buffer, splits events into turns, builds OpenInference-compliant spans, and posts them to Phoenix.
 - **Buffer file** (`/tmp/cursor-traces.jsonl`) acts as a resilient intermediary. If Phoenix is unreachable, the buffer is preserved for retry.
 

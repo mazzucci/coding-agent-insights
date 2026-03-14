@@ -1,12 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-# cursor-insights uninstaller
+# coding-agent-insights uninstaller
 # Removes hook scripts, cleans hooks.json, and optionally stops Phoenix.
 
 HOOKS_DIR="$HOME/.cursor/hooks"
 HOOKS_JSON="$HOME/.cursor/hooks.json"
-ENV_FILE="$HOOKS_DIR/.cursor-insights.env"
+ENV_FILE="$HOOKS_DIR/.coding-agent-insights.env"
 BUFFER="/tmp/cursor-traces.jsonl"
 
 GREEN='\033[0;32m'
@@ -17,7 +17,7 @@ NC='\033[0m'
 info() { echo -e "${GREEN}✓${NC} $*"; }
 warn() { echo -e "${YELLOW}!${NC} $*"; }
 
-echo -e "\n${BOLD}Removing cursor-insights…${NC}\n"
+echo -e "\n${BOLD}Removing coding-agent-insights…${NC}\n"
 
 # ── Remove hook scripts ───────────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ with open(path, 'w') as f:
     json.dump(config, f, indent=2)
     f.write('\n')
 " "$HOOKS_JSON"
-    info "Removed cursor-insights entries from $HOOKS_JSON"
+    info "Removed coding-agent-insights entries from $HOOKS_JSON"
 fi
 
 # ── Clear buffer ──────────────────────────────────────────────────────────────
@@ -74,20 +74,20 @@ fi
 # ── Phoenix container ─────────────────────────────────────────────────────────
 
 if command -v docker &>/dev/null; then
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "cursor-insights-phoenix"; then
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "coding-agent-insights-phoenix"; then
         echo ""
         read -rp "  Stop and remove the Phoenix container? [y/N]: " remove_phoenix
         if [[ "$remove_phoenix" =~ ^[Yy] ]]; then
-            docker rm -f cursor-insights-phoenix >/dev/null 2>&1 || true
+            docker rm -f coding-agent-insights-phoenix >/dev/null 2>&1 || true
             info "Removed Phoenix container"
 
             read -rp "  Also remove Phoenix data volume? [y/N]: " remove_volume
             if [[ "$remove_volume" =~ ^[Yy] ]]; then
-                docker volume rm cursor-insights_phoenix-data >/dev/null 2>&1 || true
+                docker volume rm coding-agent-insights_phoenix-data >/dev/null 2>&1 || true
                 info "Removed Phoenix data volume"
             fi
         fi
     fi
 fi
 
-echo -e "\n${BOLD}cursor-insights has been uninstalled.${NC}\n"
+echo -e "\n${BOLD}coding-agent-insights has been uninstalled.${NC}\n"

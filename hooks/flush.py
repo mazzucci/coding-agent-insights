@@ -3,7 +3,7 @@
 # dependencies = ["arize-phoenix-client>=2.0.0"]
 # ///
 """
-cursor-insights — flush script
+coding-agent-insights — flush script
 Reads buffered hook events from a JSONL file, converts them to Phoenix spans,
 sends them via the Phoenix client SDK, and truncates the buffer.
 
