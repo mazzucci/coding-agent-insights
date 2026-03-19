@@ -11,6 +11,7 @@ Only runs on stop/sessionEnd events (called by trace-hook.sh).
 """
 import json
 import os
+import tempfile
 import time
 import uuid
 from datetime import datetime, timezone
@@ -233,11 +234,16 @@ def find_session_labels(events: list[dict]) -> dict[str, str]:
 def assign_turns(events: list[dict]) -> None:
     """Split events into turns. Each beforeSubmitPrompt starts a new turn.
     Events before the first prompt (like sessionStart) go into turn 0.
-    Each event gets _turn_index, _span_id, _parent_span_id, and _trace_id."""
+    Each event gets _turn_index, _span_id, _parent_span_id, _trace_id,
+    and _event_seq (monotonic counter for stable ordering in Phoenix)."""
     turn_counters: dict[str, int] = {}
     turn_root_spans: dict[str, str] = {}
+    global_seq = 0  # monotonic counter across all events
 
     for e in events:
+        e["_event_seq"] = global_seq
+        global_seq += 1
+
         cid = e.get("conversation_id")
         if not cid:
             e["_span_id"] = make_span_id()
@@ -270,6 +276,13 @@ def build_span(event: dict, session_label: str | None = None) -> dict:
     else:
         ts = float(ts)
 
+    # Add a micro-offset based on event sequence to guarantee unique,
+    # monotonically increasing start_times even when the wall-clock
+    # timestamps are identical (the root cause of out-of-order spans
+    # in Phoenix/Arize).
+    seq = event.get("_event_seq", 0)
+    ts += seq * 0.0001  # 0.1 ms per event — well below human perception
+
     start_time = datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
 
     duration_ms = event.get("duration_ms") or event.get("duration") or 0
@@ -286,6 +299,8 @@ def build_span(event: dict, session_label: str | None = None) -> dict:
     attrs = event_to_attributes(event)
     if session_label:
         attrs["session_label"] = session_label
+    if "_event_seq" in event:
+        attrs["event.sequence"] = str(event["_event_seq"])
 
     name = event_to_span_name(event)
     hook = event.get("hook_event_name", "")
@@ -333,20 +348,55 @@ def post_to_phoenix(spans: list[dict]) -> bool:
         return False
 
 
-def main() -> None:
+def _read_and_drain_buffer() -> list[str]:
+    """Atomically read and drain the buffer file.
+
+    Uses rename-and-read to avoid a race where events appended between
+    our read() and truncate() are silently lost.  The renamed file is
+    deleted after reading; new hook events go straight to a fresh buffer.
+    """
     if not os.path.exists(BUFFER_PATH):
-        log("No buffer file found")
-        return
+        return []
+
+    buf_dir = os.path.dirname(BUFFER_PATH) or "/tmp"
+    drain_path = os.path.join(
+        buf_dir,
+        f".cursor-traces-drain-{os.getpid()}.jsonl",
+    )
 
     try:
-        with open(BUFFER_PATH) as f:
+        os.rename(BUFFER_PATH, drain_path)
+    except FileNotFoundError:
+        return []  # another flush already drained it
+    except OSError as e:
+        log(f"Rename failed, falling back to direct read: {e}")
+        # Fallback: read + truncate (original behaviour)
+        try:
+            with open(BUFFER_PATH) as f:
+                lines = f.readlines()
+            open(BUFFER_PATH, "w").close()
+            return lines
+        except Exception as e2:
+            log(f"Fallback read failed: {e2}")
+            return []
+
+    try:
+        with open(drain_path) as f:
             lines = f.readlines()
-    except Exception as e:
-        log(f"Error reading buffer: {e}")
-        return
+    finally:
+        try:
+            os.unlink(drain_path)
+        except OSError:
+            pass
+
+    return lines
+
+
+def main() -> None:
+    lines = _read_and_drain_buffer()
 
     if not lines:
-        log("Buffer is empty")
+        log("Buffer is empty or not found")
         return
 
     events: list[dict] = []
@@ -396,13 +446,9 @@ def main() -> None:
         spans.append(span)
 
     if post_to_phoenix(spans):
-        try:
-            open(BUFFER_PATH, "w").close()
-            log("Buffer truncated after successful flush")
-        except Exception as e:
-            log(f"Error truncating buffer: {e}")
+        log(f"Successfully flushed {len(spans)} spans to Phoenix")
     else:
-        log("Flush failed — buffer preserved for retry")
+        log("Flush failed — events were already drained from buffer")
 
 
 if __name__ == "__main__":
