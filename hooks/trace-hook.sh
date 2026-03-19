@@ -5,6 +5,7 @@
 # the heavy lifting of converting events to Phoenix spans.
 
 ENV_FILE="$(dirname "$0")/.coding-agent-insights.env"
+# shellcheck source=/dev/null
 [ -f "$ENV_FILE" ] && . "$ENV_FILE"
 
 BUFFER="${CURSOR_TRACES_BUFFER:-/tmp/cursor-traces.jsonl}"
@@ -27,7 +28,7 @@ fi
 
 # Append the timestamp field to the JSON object before the closing brace.
 # This avoids pulling in jq as a dependency.
-TAGGED=$(echo "$INPUT" | sed "s/}$/,\"_timestamp\":$TS}/")
+TAGGED="${INPUT%\}},\"_timestamp\":$TS}"
 
 echo "$TAGGED" >> "$BUFFER"
 

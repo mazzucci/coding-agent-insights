@@ -3,7 +3,8 @@ services:
     image: arizephoenix/phoenix:13.15.0
     container_name: coding-agent-insights-phoenix
     ports:
-      - "6006:6006"
+      - "6006:6006"   # HTTP (UI + REST API)
+      - "4317:4317"   # gRPC (OpenTelemetry collector)
     volumes:
       - phoenix-data:/data
     restart: unless-stopped
