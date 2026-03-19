@@ -16,6 +16,7 @@
 #   }
 
 ENV_FILE="$(dirname "$0")/.coding-agent-insights.env"
+# shellcheck source=/dev/null
 [ -f "$ENV_FILE" ] && . "$ENV_FILE"
 
 FLUSH_SCRIPT="$(dirname "$0")/flush.py"
